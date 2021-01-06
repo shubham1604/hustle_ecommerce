@@ -30,25 +30,49 @@ def product(request, pk):
 
     return render(request, "product-page.html", context)
 
-def add_to_cart(request):
+def cart_action(request):
     data = request.POST or None
     if data:
-        form = OrderProductForm(request.POST)
-        if form.is_bound and form.is_valid():
-            with transaction.atomic() as txn:
-                order, created = Order.objects.get_or_create(placed=False, user_id = request.user.id)
-                order_product_qs = OrderProduct.objects.filter(order = order)
-                if order_product_qs.exists():
-                    order_product_ob = order_product_qs[0]
-                    quantity = form.cleaned_data.get('quantity_ordered')
-                    order_product_ob.quantity_ordered = quantity
-                    order_product_ob.save()
-                else:
-                    order_product_ob = form.save(commit=False)
-                    order_product_ob.order_id = order.pk
-                    order_product_ob.save()
+        if 'add_to_cart' in request.POST:
+            form = OrderProductForm(request.POST)
+            if form.is_bound and form.is_valid():
+                with transaction.atomic() as txn:
+                    order, created = Order.objects.get_or_create(placed=False, user_id = request.user.id)
+                    order_product_qs = OrderProduct.objects.filter(order = order)
+                    if order_product_qs.exists():
+                        order_product_qs = order_product_qs.filter(product_id = form.cleaned_data.get('product'))
+                        if order_product_qs.exists():
+                            order_product_ob = order_product_qs[0]
+                            quantity = form.cleaned_data.get('quantity_ordered')
+                            order_product_ob.quantity_ordered = quantity
+                        else:
+                            order_product_ob = form.save(commit=False)
+                            order_product_ob.order = order
+                        order_product_ob.save()
 
-    return redirect(reverse('product', kwargs={'pk':order_product_ob.product_id}))
+
+                    else:
+                        order_product_ob = form.save(commit=False)
+                        order_product_ob.order_id = order.pk
+                        order_product_ob.save()
+        elif 'remove_from_cart' in request.POST:
+            form = OrderProductForm(request.POST)
+            if form.is_bound and form.is_valid():
+                order = Order.objects.filter(placed = False, user_id = request.user.id)
+                product_to_remove = form.cleaned_data.get('product')
+
+                if order.exists():
+                    order = order[0]
+                    order_products_qs = order.orderproduct_set.all()
+                    if order_products_qs.exists():
+                        if product_to_remove.id in order_products_qs.values_list('product', flat = True):
+                            order_products_qs.filter(product = product_to_remove).delete()
+
+    pid = request.POST.get('product')
+    return redirect(reverse('product', kwargs={'pk':pid}))
+
+
+
 
 def checkout(request):
     return render(request, "checkout-page.html", {})
