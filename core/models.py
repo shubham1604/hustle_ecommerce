@@ -34,6 +34,15 @@ class Order(models.Model):
     started_on = models.DateTimeField(auto_now_add = True)
     placed_on = models.DateTimeField(null=True)
 
+    def order_price(self):
+        items = self.orderproduct_set.all()
+
+        total = 0
+        for item in items:
+            total += item.get_item_price()
+
+        return total
+
 
 
 class OrderProduct(models.Model):
@@ -44,3 +53,10 @@ class OrderProduct(models.Model):
 
     def __str__(self):
         return f"{self.quantity_ordered} of {self.product.product_title}"
+
+    def get_item_price(self):
+        item_price = self.product.discount_price if self.product.discount_price else self.product.price
+        return item_price*self.quantity_ordered
+
+    def get_money_saved(self):
+        return self.quantity_ordered*(self.product.price - self.product.discount_price)

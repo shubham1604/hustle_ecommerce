@@ -5,6 +5,7 @@ from .forms.add_to_cart import OrderProductForm
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.contrib import messages
+from django.db.models import F
 
 def home(request):
     context = {}
@@ -42,16 +43,16 @@ def cart_action(request):
                     order_product_qs = OrderProduct.objects.filter(order = order)
                     if order_product_qs.exists():
                         order_product_qs = order_product_qs.filter(product_id = form.cleaned_data.get('product'))
-                        if order_product_qs.exists():
+                        if order_product_qs.exists() and order_product_qs.count() == 1:
+                            quantity = form.cleaned_data.get('quantity_ordered',1)
+                            order_product_qs.update(quantity_ordered = F('quantity_ordered')+quantity)
                             order_product_ob = order_product_qs[0]
-                            quantity = form.cleaned_data.get('quantity_ordered')
-                            order_product_ob.quantity_ordered = quantity
                             messages.info(request, "The quantity for this item was updated")
                         else:
                             order_product_ob = form.save(commit=False)
                             order_product_ob.order = order
                             messages.info(request, "This item was added to your cart")
-                        order_product_ob.save()
+                            order_product_ob.save()
 
 
                     else:
@@ -70,8 +71,11 @@ def cart_action(request):
                     order_products_qs = order.orderproduct_set.all()
                     if order_products_qs.exists():
                         if product_to_remove.id in order_products_qs.values_list('product', flat = True):
-                            order_products_qs.filter(product = product_to_remove).delete()
-                            messages.info(request, "This item was removed from your cart")
+                            order_products_qs.filter(product = product_to_remove).update(quantity_ordered=F('quantity_ordered')-1)
+                            if order_products_qs[0].quantity_ordered == 0:
+                                order_products_qs.filter(product = product_to_remove).delete()
+
+                            messages.info(request, "The quantity for this item was updated")
                         else:
                             messages.info(request, "This item was not in your cart")
                     else:
@@ -83,6 +87,35 @@ def cart_action(request):
     return redirect(reverse('product', kwargs={'pk':pid}))
 
 
+def delete_item_from_cart(request):
+    form = OrderProductForm(request.POST)
+    if form.is_bound and form.is_valid():
+        order = Order.objects.filter(placed = False, user_id = request.user.id)
+        product_to_remove = form.cleaned_data.get('product')
+
+        if order.exists():
+            order = order[0]
+            order_products_qs = order.orderproduct_set.all()
+            if order_products_qs.exists():
+                if product_to_remove.id in order_products_qs.values_list('product', flat = True):
+                    order_products_qs.filter(product = product_to_remove).delete()
+                    messages.info(request, "The item was deleted from our cart")
+                else:
+                    messages.info(request, "This item was not in your cart")
+            else:
+                messages.info(request, "Your cart was already empty")
+        else:
+            messages.info(request, "You do not have an active order")
+
+    return redirect(reverse('order_summary'))
+
+def order_summary(request):
+    context = {}
+    order_qs = Order.objects.filter(placed = False, user = request.user)
+    if order_qs.exists():
+        order = order_qs[0]
+    context.update({'order':order})
+    return render(request, "order-summary.html", context)
 
 
 def checkout(request):

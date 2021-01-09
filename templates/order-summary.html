@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="table-responsive text-nowrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">S.No.</th>
+        <th scope="col">Item</th>
+        <th scope="col">Price</th>
+        <th scope="col">Quantity</th>
+        <th scope="col">Total Price</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      {% for order_product in order.orderproduct_set.all %}
+      <tr>
+        <td scope="row">{{forloop.counter}}</td>
+        <td>{{order_product.product.product_title}}</td>
+        <td>Rs. {% if order_product.product.discount_price %}{{order_product.product.discount_price}}{% else %}{{order_product.product.price}}{% endif %}</td>
+        <td>
+          <form method = "POST" action = "{% url 'cart-action' %}">
+            {% csrf_token %}
+          <input type = "hidden" value = "{{order_product.product.pk}}" name = "product">
+          <input name = "quantity_ordered" type="hidden" value="1" aria-label="Search" class="form-control" style="width: 100px">
+          <button name = "add_to_cart" type="submit" style = "border:none; background-color:white;"><i class="fas fa-plus"></i></button>{{order_product.quantity_ordered}}<button type="submit" name = "remove_from_cart" style = "border:none; background-color:white;"><i class="fas fa-minus"></i></button>
+        </form>
+        </td>
+        <td>Rs. {{order_product.get_item_price}}{% if order_product.product.discount_price %}( saved {{order_product.get_money_saved}}){% endif %}</td>
+        <td>
+          <form method = "post" action = "{% url 'delete-item-from-cart' %}">
+            {% csrf_token %}
+            <input type = "hidden" name = "product" value = "{{order_product.product.pk}}">
+            <input type = "hidden" name = "quantity_ordered" value = "0">
+            <button name = "delete_item" type="submit" style = "border:none; background-color:white;"><i class="fas fa-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+        <tr>
+          <td colspan = "5">Your cart is empty</td>
+         </tr>
+      {% endfor %}
+      {% if order.orderproduct_set.all.count > 0 %}
+      <tr>
+      <td colspan = "4"><b>Total Price</b></td>
+      <td><b>Rs.{{order.order_price}}</b></td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td colspan = "5">
+          {% if order.orderproduct_set.all.count > 0 %}
+          <a href = "{% url 'checkout' %}" class= "btn btn-primary float-right ml-2">Proceed to checkout</a>
+          {% endif %}
+          <a href = "{% url 'home' %}" class= "btn btn-warning float-right">Continue Shopping</a>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+{% endblock content %}
