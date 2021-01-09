@@ -4,6 +4,7 @@ from .models import Categories, Product, Order, OrderProduct
 from .forms.add_to_cart import OrderProductForm
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.contrib import messages
 
 def home(request):
     context = {}
@@ -45,9 +46,11 @@ def cart_action(request):
                             order_product_ob = order_product_qs[0]
                             quantity = form.cleaned_data.get('quantity_ordered')
                             order_product_ob.quantity_ordered = quantity
+                            messages.info(request, "The quantity for this item was updated")
                         else:
                             order_product_ob = form.save(commit=False)
                             order_product_ob.order = order
+                            messages.info(request, "This item was added to your cart")
                         order_product_ob.save()
 
 
@@ -55,6 +58,7 @@ def cart_action(request):
                         order_product_ob = form.save(commit=False)
                         order_product_ob.order_id = order.pk
                         order_product_ob.save()
+                        messages.info(request, "This item was added to your cart")
         elif 'remove_from_cart' in request.POST:
             form = OrderProductForm(request.POST)
             if form.is_bound and form.is_valid():
@@ -67,6 +71,13 @@ def cart_action(request):
                     if order_products_qs.exists():
                         if product_to_remove.id in order_products_qs.values_list('product', flat = True):
                             order_products_qs.filter(product = product_to_remove).delete()
+                            messages.info(request, "This item was removed from your cart")
+                        else:
+                            messages.info(request, "This item was not in your cart")
+                    else:
+                        messages.info(request, "Your cart was already empty")
+                else:
+                    messages.info(request, "You do not have an active order")
 
     pid = request.POST.get('product')
     return redirect(reverse('product', kwargs={'pk':pid}))
