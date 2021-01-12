@@ -33,6 +33,7 @@ class Order(models.Model):
     placed = models.BooleanField(default = False)
     started_on = models.DateTimeField(auto_now_add = True)
     placed_on = models.DateTimeField(null=True)
+    payment = models.ForeignKey('Payment', on_delete= models.SET_NULL, null=True, blank=True)
 
     def order_price(self):
         items = self.orderproduct_set.all()
@@ -60,3 +61,14 @@ class OrderProduct(models.Model):
 
     def get_money_saved(self):
         return self.quantity_ordered*(self.product.price - self.product.discount_price)
+
+
+class Payment(models.Model):
+
+    stripe_charge_id = models.CharField(max_length=50)
+    timestamp = models.DateTimeField(auto_now_add = True)
+    amount = models.FloatField()
+    user = models.ForeignKey(settings.AUTH_USER_MODEL ,on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.user.username

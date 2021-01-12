@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from .models import Categories, Product, Order, OrderProduct
+from .models import Categories, Product, Order, OrderProduct, Payment
 from .forms.add_to_cart import OrderProductForm
+from .forms.checkout_form import CheckoutForm
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.contrib import messages
 from django.db.models import F
+import stripe
+from datetime import datetime
 
 def home(request):
     context = {}
@@ -119,4 +122,89 @@ def order_summary(request):
 
 
 def checkout(request):
-    return render(request, "checkout-page.html", {})
+    context = {}
+    order = Order.objects.filter(placed=False, user=request.user)[0]
+    if request.method == 'POST':
+        print(request.POST)
+        form = CheckoutForm(request.POST)
+
+        if form.is_valid():
+            street_address1 = form.cleaned_data.get('street_address1')
+            street_address2 = form.cleaned_data.get('street_address2')
+            country = form.cleaned_data.get('country')
+            zip = form.cleaned_data.get('zip')
+            same_billing_address = form.cleaned_data.get('same_billing_address')
+            save_info = form.cleaned_data.get('save_info')
+            payment_option = form.cleaned_data.get('payment_option')
+
+            if payment_option == 'S':
+                return redirect(reverse('payment'))
+            elif payment_option == 'P':
+                return redirect(reverse('payment'))
+            else:
+                messages.info("wrong payment method selected")
+
+
+
+        else:
+            print("Invalid")
+
+    else:
+
+        form = CheckoutForm()
+    print(order)
+    print(order.orderproduct_set.all())
+    context.update({'form':form, 'order':order})
+    return render(request, "checkout-page.html", context)
+
+
+def payment(request):
+    context = {}
+    if request.method == 'POST':
+            try:
+      # Use Stripe's library to make requests...
+                with transaction.atomic() as txn:
+                    order = Order.objects.filter(placed = False, user = request.user).first()
+                    stripe.api_key = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+                    amount = int(order.order_price()*100)
+                    charge = stripe.Charge.create(
+                      amount=amount,
+                      currency="usd",
+                      source="tok_mastercard",
+                      description="My First Test Charge (created for API docs)",
+                    )
+
+
+                    payment = Payment()
+                    payment.stripe_charge_id = charge['id']
+                    payment.amount = charge['amount']
+                    payment.user = request.user
+                    payment.save()
+
+                    order.placed = True
+                    order.placed_on = datetime.now()
+                    order.payment = payment
+                    order.save()
+
+                    messages.info(request, "Your order was successfull")
+                    return redirect('/')
+            except stripe.error.CardError as e:
+                messages.warning(request, "Xard Error")
+            except stripe.error.RateLimitError as e:
+                messages.warning(request, "Rate Limit Error")
+            except stripe.error.InvalidRequestError as e:
+                messages.warning(request, "Invalid Request Error")
+                print(e)
+            except stripe.error.AuthenticationError as e:
+                messages.warning(request, "Authentication Error")
+            except stripe.error.APIConnectionError as e:
+                messages.warning(request, "API connection Error")
+            except stripe.error.StripeError as e:
+                messages.warning(request, "Something went wrong, you haven't been charged")
+            except Exception as e:
+                print(e)
+                messages.warning(request, "This is a serious error. We have been notified. You have not been charged")
+
+    else:
+        print("157")
+    return render(request,'payment.html',context)
