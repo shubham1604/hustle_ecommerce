@@ -125,25 +125,35 @@ grey lighten-3
               <span class="text-muted">Rs. {{order_product_ob.get_item_price}}</span>
             </li>
             {% endfor %}
+            {% if order.coupon %}
+            <li style = "color:green" class="list-group-item d-flex justify-content-between">
+                <span>Coupon: {{order.coupon.code}}</span>
+                <strong>-{{order.coupon.amount}}</strong>
+            </li>
+            {% endif %}
             <li class="list-group-item d-flex justify-content-between">
                 <span>Total(Rs.)</span>
                 <strong>{{order.order_price}}</strong>
             </li>
+
           </ul>
           <!-- Cart -->
 
           <!-- Promo code -->
-          <form class="card p-2">
+          <form class="card p-2" method = "post" action = {% url 'add_coupon' %}>
+            {% csrf_token %}
             <div class="input-group">
-              <input type="text" class="form-control" placeholder="Promo code" aria-label="Recipient's username" aria-describedby="basic-addon2">
+              {{coupon_form.code}}
+              <!-- <input type="text" class="form-control" placeholder="Promo code" aria-label="Recipient's username" aria-describedby="basic-addon2"> -->
               <div class="input-group-append">
-                <button class="btn btn-secondary btn-md waves-effect m-0" type="button">Redeem</button>
+                <button class="btn btn-secondary btn-md waves-effect m-0" type="submit">Redeem</button>
               </div>
             </div>
           </form>
           <!-- Promo code -->
 
         </div>
+
         <!--Grid column-->
 
       </div>

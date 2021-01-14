@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from .models import Categories, Product, Order, OrderProduct, Payment
+from .models import Categories, Product, Order, OrderProduct, Payment, Coupon
 from .forms.add_to_cart import OrderProductForm
 from .forms.checkout_form import CheckoutForm
+from .forms.coupon_form import CouponForm
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.contrib import messages
@@ -152,14 +153,15 @@ def checkout(request):
     else:
 
         form = CheckoutForm()
-    print(order)
-    print(order.orderproduct_set.all())
-    context.update({'form':form, 'order':order})
+
+    coupon_form = CouponForm()
+    context.update({'form':form, 'order':order, 'coupon_form': coupon_form})
     return render(request, "checkout-page.html", context)
 
 
 def payment(request):
     context = {}
+    order = Order.objects.filter(placed = False, user = request.user)[0]
     if request.method == 'POST':
             try:
       # Use Stripe's library to make requests...
@@ -207,4 +209,27 @@ def payment(request):
 
     else:
         print("157")
+    context.update({'order':order, 'DISPLAY_COUPON_FORM':0})
     return render(request,'payment.html',context)
+
+def add_coupon(request):
+
+    if request.method == "POST":
+        form = CouponForm(request.POST)
+
+        if form.is_valid():
+            coupon       = form.cleaned_data.get('code')
+            coupon_qs    = Coupon.objects.filter(code = coupon, expiry_date__gt=datetime.now())
+            used_coupons = Order.objects.filter(user = request.user).values_list('coupon', flat=True)
+
+            if coupon_qs.exists() and coupon not in used_coupons:
+                order = Order.objects.filter(user = request.user, placed = False)
+                order = order[0] if order.exists() else None
+                if order:
+                    order.coupon = coupon_qs.first()
+                    order.save()
+            else:
+                messages.info(request, "Zyada Chalaak mat ban")
+    else:
+        form = CouponForm()
+    return redirect(reverse('checkout'))

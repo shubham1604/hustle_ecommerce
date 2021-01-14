@@ -42,10 +42,17 @@
          </tr>
       {% endfor %}
       {% if order.orderproduct_set.all.count > 0 %}
+      {% if order.coupon %}
+      <tr>
+      <td colspan = "4"><b>Coupon : {{order.coupon.code}}</b></td>
+      <td><b>-{{order.coupon.amount}}</b></td>
+      </tr>
+      {% endif %}
       <tr>
       <td colspan = "4"><b>Total Price</b></td>
       <td><b>Rs.{{order.order_price}}</b></td>
       </tr>
+
       {% endif %}
       <tr>
         <td colspan = "5">
@@ -55,6 +62,7 @@
           <a href = "{% url 'home' %}" class= "btn btn-warning float-right">Continue Shopping</a>
         </td>
       </tr>
+
 
     </tbody>
   </table>

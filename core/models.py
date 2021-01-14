@@ -1,7 +1,14 @@
 from django.db import models
 from django.conf import settings
+from django_countries.fields import CountryField
+
 
 # Create your models here.
+
+ADDRESS_TYPE = (
+('S', 'SHIPPING ADDRESS'),
+('B', 'BILLING ADDRESS')
+)
 
 class Categories(models.Model):
     category_name = models.CharField(max_length = 50, unique = True)
@@ -34,6 +41,8 @@ class Order(models.Model):
     started_on = models.DateTimeField(auto_now_add = True)
     placed_on = models.DateTimeField(null=True)
     payment = models.ForeignKey('Payment', on_delete= models.SET_NULL, null=True, blank=True)
+    address = models.ForeignKey('Address', on_delete = models.SET_NULL, null= True, blank=True)
+    coupon = models.ForeignKey('Coupon', on_delete = models.SET_NULL, blank=True, null=True)
 
     def order_price(self):
         items = self.orderproduct_set.all()
@@ -42,6 +51,7 @@ class Order(models.Model):
         for item in items:
             total += item.get_item_price()
 
+        total -= self.coupon.amount if self.coupon else 0
         return total
 
 
@@ -72,3 +82,27 @@ class Payment(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+class Address(models.Model):
+
+    house_no = models.TextField()
+    street = models.TextField()
+    state = models.CharField(max_length = 50)
+    country = CountryField()
+    zip = models.PositiveIntegerField()
+    default = models.BooleanField(null=True)
+    type = models.CharField(max_length=20,choices = ADDRESS_TYPE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+
+class Coupon(models.Model):
+
+    code = models.CharField(max_length = 15, unique=True)
+    amount = models.FloatField()
+    created_on = models.DateTimeField(auto_now_add=True)
+    expiry_date = models.DateTimeField()
+    discount_percentage = models.PositiveIntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return self.code
