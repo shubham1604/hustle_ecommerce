@@ -115,8 +115,8 @@ def delete_item_from_cart(request):
 def order_summary(request):
     context = {}
     order_qs = Order.objects.filter(placed = False, user = request.user)
-    if order_qs.exists():
-        order = order_qs[0]
+    # if order_qs.exists():
+    order = order_qs[0] if order_qs.exists() else []
     context.update({'order':order})
     return render(request, "order-summary.html", context)
 
