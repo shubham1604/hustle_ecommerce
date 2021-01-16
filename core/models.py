@@ -43,6 +43,7 @@ class Order(models.Model):
     payment = models.ForeignKey('Payment', on_delete= models.SET_NULL, null=True, blank=True)
     address = models.ForeignKey('Address', on_delete = models.SET_NULL, null= True, blank=True)
     coupon = models.ForeignKey('Coupon', on_delete = models.SET_NULL, blank=True, null=True)
+    price = models.FloatField(null=True ,default = None)
 
     def order_price(self):
         items = self.orderproduct_set.all()

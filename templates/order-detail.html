@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="table-responsive text-nowrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">S.No.</th>
+        <th scope="col">Item</th>
+        <th scope="col">Price</th>
+        <th scope="col">Quantity</th>
+        <th scope="col">Total Price</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      {% for order_product in order.orderproduct_set.all %}
+      <tr>
+        <td scope="row">{{forloop.counter}}</td>
+        <td>{{order_product.product.product_title}}</td>
+        <td>Rs. {% if order_product.product.discount_price %}{{order_product.product.discount_price}}{% else %}{{order_product.product.price}}{% endif %}</td>
+        <td>
+          <form method = "POST" action = "{% url 'cart-action' %}">
+            {% csrf_token %}
+          <input type = "hidden" value = "{{order_product.product.pk}}" name = "product">
+          <input name = "quantity_ordered" type="hidden" value="1" aria-label="Search" class="form-control" style="width: 100px">
+          {{order_product.quantity_ordered}}
+        </form>
+        </td>
+        <td>Rs. {{order_product.get_item_price}}{% if order_product.product.discount_price %}( saved {{order_product.get_money_saved}}){% endif %}</td>
+
+      </tr>
+      {% empty %}
+        <tr>
+          <td colspan = "5">Your cart is empty</td>
+         </tr>
+      {% endfor %}
+      {% if order.orderproduct_set.all.count > 0 %}
+      {% if order.coupon %}
+      <tr>
+      <td colspan = "4"><b>Coupon : {{order.coupon.code}}</b></td>
+      <td><b>-{{order.coupon.amount}}</b></td>
+      </tr>
+      {% endif %}
+      <tr>
+      <td colspan = "4"><b>Total Price</b></td>
+      <td><b>Rs.{{order.order_price}}</b></td>
+      </tr>
+
+      {% endif %}
+
+
+
+    </tbody>
+  </table>
+</div>
+<div class="container wow fadeIn">
+  <!--Grid row-->
+
+  <div class="row">
+    <!--Grid column-->
+    <div class="col-md-4 mb-4 offset-md-2">
+      <!--Card-->
+
+      <div class="card">
+        <!--Card content-->
+        <div class="card-body">
+
+          <b style = "text-align:center;">Billing Address</b>
+          <!-- <div class = "row">
+
+          </div> -->
+
+          <!-- <div class="md-form ">
+          </div> -->
+
+          <!--address-2-->
+
+          <!--Grid row-->
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+      <!--Card-->
+
+      <div class="card">
+        <!--Card content-->
+        <div class="card-body">
+          <b style = "text-align:center;">Shipping Address</b>
+
+
+          <!-- <div class = "row">
+
+          </div> -->
+
+          <!-- <div class="md-form ">
+          </div> -->
+
+
+          <!--address-2-->
+
+          <!--Grid row-->
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+  <!--Grid row-->
+
+
+</div>
+{% endblock content %}

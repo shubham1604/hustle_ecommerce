@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load cart_template_tags %}
+{% block body_classes %}
+grey lighten-3
+{% endblock %}
+{% block content %}
+  <!--Main layout-->
+  <main class="mt-5 pt-4">
+    <div class="container wow fadeIn">
+      <!--Grid row-->
+      {% for order in orders %}
+      <div class="row">
+        <!--Grid column-->
+        <div class="col-md-6 mb-4 offset-md-3">
+          <!--Card-->
+
+          <div class="card">
+            <!--Card content-->
+            <div class="card-body">
+              <div class = "row">
+
+              </div>
+              Placed on: {{order.placed_on}}
+              Price : Rs. {{order.order_price}}
+              {% for item in order.orderproduct_set.all %}
+              <div class="md-form ">
+                {{item.quantity_ordered}} X {{item.product}}
+              </div>
+              {% endfor %}
+
+              <!--address-2-->
+
+              <!--Grid row-->
+            <a href = "{% url 'order_details' order.pk %}"><button class="btn btn-primary" type="button">View Order</button></a>
+            </div>
+          </div>
+        </div>
+        <!--Grid column-->
+        <!--Grid column-->
+      </div>
+      {% endfor %}
+      <!--Grid row-->
+    </div>
+  </main>
+{% endblock content %}

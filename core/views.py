@@ -186,6 +186,7 @@ def payment(request):
                     order.placed = True
                     order.placed_on = datetime.now()
                     order.payment = payment
+                    order.price = order.order_price()
                     order.save()
 
                     messages.info(request, "Your order was successfull")
@@ -233,3 +234,20 @@ def add_coupon(request):
     else:
         form = CouponForm()
     return redirect(reverse('checkout'))
+
+def order_history(request):
+    context = {}
+    orders = Order.objects.filter(placed=True, user=request.user)
+    context.update({'orders':orders})
+    return render(request,"order-history.html",context)
+
+def order_details(request, pk):
+    context = {}
+    order = Order.objects.filter(pk = pk)
+    if order.exists():
+        order = order.first()
+    else:
+        messages.info(request, "The order doesn't exist")
+
+    context.update({'order':order})
+    return render(request,"order-detail.html", context)
