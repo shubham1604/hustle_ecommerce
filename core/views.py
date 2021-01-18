@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from .models import Categories, Product, Order, OrderProduct, Payment, Coupon
+from .models import Categories, Product, Order, OrderProduct, Payment, Coupon, Address
 from .forms.add_to_cart import OrderProductForm
 from .forms.checkout_form import CheckoutForm
 from .forms.coupon_form import CouponForm
@@ -10,6 +10,18 @@ from django.contrib import messages
 from django.db.models import F
 import stripe
 from datetime import datetime
+
+def is_valid_form(values):
+
+    is_valid = True
+    for value in values:
+        if value == '':
+            is_valid = False
+            break
+
+    return is_valid
+
+
 
 def home(request):
     context = {}
@@ -125,17 +137,100 @@ def order_summary(request):
 def checkout(request):
     context = {}
     order = Order.objects.filter(placed=False, user=request.user)[0]
+    shipping_address_qs = Address.objects.filter(user = request.user, default = True, type = 'S')
+    if shipping_address_qs.exists():
+        context.update({'default_shipping_address': shipping_address_qs[0]})
+
+    billing_address_qs = Address.objects.filter(user = request.user, default = True, type = 'B')
+    if billing_address_qs.exists():
+        context.update({'default_billing_address': shipping_address_qs[0]})
+
+
     if request.method == 'POST':
         print(request.POST)
         form = CheckoutForm(request.POST)
 
         if form.is_valid():
-            street_address1 = form.cleaned_data.get('street_address1')
-            street_address2 = form.cleaned_data.get('street_address2')
-            country = form.cleaned_data.get('country')
-            zip = form.cleaned_data.get('zip')
+
+
+            use_default_shipping = form.cleaned_data.get('use_default_shipping')
+
+            if use_default_shipping:
+                address_qs = Address.objects.filter(user = request.user, default = True, type = 'S')
+                if address_qs.exists():
+                    shipping_address = address_qs[0]
+                else:
+                    messages.info(request, "You have no default shipping address ")
+            else:
+                shipping_address1 = form.cleaned_data.get('shipping_address1')
+                shipping_address2 = form.cleaned_data.get('shipping_address2')
+                shipping_country = form.cleaned_data.get('shipping_country')
+                shipping_zip = form.cleaned_data.get('shipping_zip')
+
+                set_default_shipping = form.cleaned_data.get('set_default_shipping')
+
+                if is_valid_form([shipping_address1, shipping_address2, shipping_zip]):
+                    shipping_address = Address(
+                    house_no = shipping_address2,
+                    street = shipping_address1,
+                    country = shipping_country,
+                    zip = shipping_zip,
+                    default = set_default_shipping,
+                    type = "S",
+                    user = request.user
+                    )
+                    shipping_address.save()
+                else:
+                    shipping_address = None
+                    messages.info(request, "Please Add shipping address fields")
+
+
             same_billing_address = form.cleaned_data.get('same_billing_address')
-            save_info = form.cleaned_data.get('save_info')
+            use_default_billing = form.cleaned_data.get('use_default_billing')
+
+            if same_billing_address:
+                billing_address = shipping_address
+                billing_address.pk = None
+                billing_address.type = "B"
+                billing_address.save()
+                order.address = billing_address
+                order.save()
+
+            elif use_default_billing:
+                address_qs = Address.objects.filter(user = request.user, default = True, type = 'B')
+                if address_qs.exists():
+                    billing_address = address_qs[0]
+                else:
+                    messages.info(request, "You have no default billing address ")
+            else:
+                billing_address1 = form.cleaned_data.get('billing_address1')
+                billing_address2 = form.cleaned_data.get('billing_address2')
+                billing_country = form.cleaned_data.get('shipping_country')
+                billing_zip = form.cleaned_data.get('billing_zip')
+
+                set_default_billing = form.cleaned_data.get('set_default_billing')
+
+                if is_valid_form([billing_address1, billing_address2, billing_zip]):
+                    billing_address = Address(
+                    house_no = billing_address2,
+                    street = billing_address1,
+                    country = billing_country,
+                    zip = billing_zip,
+                    default = set_default_billing,
+                    type = "B",
+                    user = request.user
+                    )
+                    billing_address.save()
+                else:
+                    billing_address = None
+                    messages.info(request, "Please Add billing address fields")
+
+            order.shipping_address = shipping_address
+            order.billing_address = billing_address
+            order.save()
+
+
+
             payment_option = form.cleaned_data.get('payment_option')
 
             if payment_option == 'S':
@@ -143,10 +238,7 @@ def checkout(request):
             elif payment_option == 'P':
                 return redirect(reverse('payment'))
             else:
-                messages.info("wrong payment method selected")
-
-
-
+                messages.info(request, "wrong payment method selected")
         else:
             print("Invalid")
 

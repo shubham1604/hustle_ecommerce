@@ -25,16 +25,17 @@ grey lighten-3
             <!--Card content-->
             <form class="card-body" action="{% url 'checkout' %}" method = "post">
               {% csrf_token %}
-
+              <h3>Shipping Address</h3>
+              <div class = "hideable_shiping_form">
               <div class="md-form mb-5">
-                {{form.shipping_address1}}
+                <input type = "text" placeholder="1234 Main St" name = "shipping_address1" class = "form-control" id = "address">
                 <label for="address" class="">Address</label>
               </div>
 
               <!--address-2-->
               <div class="md-form mb-5">
-                {{form.shipping_address2}}
-                <label for="address-2" class="">Address 2 (optional)</label>
+                <input type = "text" placeholder="Apartment or suite" name = "shipping_address2" class = "form-control" id = "address2">
+                <label for="address2" class="">Address 2 (optional)</label>
               </div>
 
               <!--Grid row-->
@@ -43,7 +44,7 @@ grey lighten-3
                 <!--Grid column-->
                 <div class="col-lg-4 col-md-12 mb-4">
 
-                  {{form.country}}
+                  {{form.shipping_country}}
 
                   <div class="invalid-feedback">
                     Please select a valid country.
@@ -58,7 +59,7 @@ grey lighten-3
                 <div class="col-lg-4 col-md-6 mb-4">
 
                   <label for="zip">Zip</label>
-                  {{form.zip}}
+                  <input type = "text" placeholder="Zip" name = "shipping_zip" class = "form-control" id = "shipping_zip">
                   <div class="invalid-feedback">
                     Zip code required.
                   </div>
@@ -67,22 +68,89 @@ grey lighten-3
                 <!--Grid column-->
 
               </div>
+
+              <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input" name="same_billing_address" id="same_billing_address">
+                  <label class="custom-control-label" for="same_billing_address">Billing address is the same as my shipping address</label>
+                </div>
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input" name="set_default_shipping" id="set_default_shipping">
+                  <label class="custom-control-label" for="set_default_shipping">Save as default shipping address</label>
+                </div>
+
               <!--Grid row-->
+              {% if default_shipping_address %}
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" name="use_default_shipping" id="use_default_shipping">
+                <label class="custom-control-label" for="use_default_shipping">Use default shipping address: {{ default_shipping_address.street_address|truncatechars:10 }}</label>
+              </div>
+              {% endif %}
+            </div>
+
 
               <hr>
 
-              <div class="custom-control custom-checkbox">
-                {{form.same_billing_address}}
-                <label class="custom-control-label" for="id_same_billing_address">Shipping address is the same as my billing address</label>
+              <div class = "hideable_shiping_form">
+              <div class="md-form mb-5">
+                <input type = "text" placeholder="1234 Main St" name = "billing_address1" class = "form-control" id = "address">
+                <label for="address" class="">Address</label>
               </div>
-              <div class="custom-control custom-checkbox">
-                {{form.save_info}}
-                <label class="custom-control-label" for="id_save_info">Save this information for next time</label>
+
+              <!--address-2-->
+              <div class="md-form mb-5">
+                <input type = "text" placeholder="Apartment or suite" name = "billing_address2" class = "form-control" id = "address2">
+                <label for="address2" class="">Address 2 (optional)</label>
+              </div>
+
+              <!--Grid row-->
+              <div class="row">
+
+                <!--Grid column-->
+                <div class="col-lg-4 col-md-12 mb-4">
+
+                  {{form.shipping_country}}
+
+                  <div class="invalid-feedback">
+                    Please select a valid country.
+                  </div>
+
+                </div>
+                <!--Grid column-->
+
+
+
+                <!--Grid column-->
+                <div class="col-lg-4 col-md-6 mb-4">
+
+                  <label for="zip">Zip</label>
+                  <input type = "text" placeholder="Zip" name = "billing_zip" class = "form-control" id = "billing_zip">
+                  <div class="invalid-feedback">
+                    Zip code required.
+                  </div>
+
+                </div>
+                <!--Grid column-->
 
               </div>
+
+
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input" name="set_default_billing" id="set_default_billing">
+                  <label class="custom-control-label" for="set_default_billing">Save as default billing address</label>
+                </div>
+
+              <!--Grid row-->
+              {% if default_billing_address %}
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" name="use_default_billing" id="use_default_billing">
+                <label class="custom-control-label" for="use_default_billing">Use default billing address: {{ default_shipping_address.street_address|truncatechars:10 }}</label>
+              </div>
+              {% endif %}
+            </div>
+
 
               <hr>
-
+              <h3>Payment Options</h3>
               <div class="d-block my-3">
                 {% for choice,text in form.fields.payment_option.choices %}
                 <div class="custom-control custom-radio">
