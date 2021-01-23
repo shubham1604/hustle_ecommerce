@@ -4,6 +4,18 @@ from django_countries.fields import CountryField
 
 
 # Create your models here.
+from django.contrib.auth.models import AbstractUser
+
+# Create your models here.
+
+
+class MyUser(AbstractUser):
+    email = models.EmailField(max_length=40, unique=True)
+
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
+
 
 ADDRESS_TYPE = (
 ('S', 'SHIPPING ADDRESS'),
@@ -97,7 +109,7 @@ class Address(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.user.username
+        return self.user.email
 
 
 class Coupon(models.Model):

@@ -1,0 +1,73 @@
+
+{% extends 'base.html' %}
+{% load cart_template_tags %}
+{% block body_classes %}
+{% endblock %}
+{% block content %}
+
+
+
+  <!--Main layout-->
+  <main class=" pt-4">
+    <div class="container wow fadeIn">
+
+      <!-- Heading -->
+      <h2 class="mb-3 h2 text-center">Signup form</h2>
+
+      <!--Grid row-->
+      <div class="row">
+
+        <!--Grid column-->
+        <div class="col-md-8 offset-md-2">
+
+          <!--Card-->
+          <div class="card">
+            <!--Card content-->
+            <form class="card-body" method = "post">
+              {% csrf_token %}
+              <div class = "hideable_shiping_form">
+                {% for field in form %}
+                <div class= "row">
+                  {{field}}
+                  <span style = "color:red">{{field.errors}}</span>
+                  <!-- <input type = "text" placeholder="First Name" class=  "form-control col-lg-6 offset-lg-3  mb-4"> -->
+                </div>
+                {% endfor %}
+                <!-- <div class= "row">
+                  <input type = "text" placeholder="Last Name" class=  "form-control col-lg-6 offset-lg-3  mb-4">
+                </div>
+
+                <div class= "row">
+                  <input type = "text" placeholder="Email" class=  "form-control col-lg-6 offset-lg-3  mb-4">
+                </div>
+
+                <div class= "row">
+                  <input type = "password" placeholder="Password" class=  "form-control col-lg-6 offset-lg-3  mb-4">
+                </div>
+
+                <div class= "row">
+                <input type = "text" placeholder="Confirm Password" class=  "form-control col-lg-6 offset-lg-3  mb-4">
+                </div> -->
+
+
+
+                <!--Grid column-->
+                <p style = "text-align:center">Already have an account ? <a href = "{% url 'login' %}">Sign In</a></p>
+              <button class="btn btn-primary btn-lg btn-block" type="submit">Register</button>
+            </form>
+
+          </div>
+          <!--/.Card-->
+
+        </div>
+        <!--Grid column-->
+        <!--Grid column-->
+        <!--Grid column-->
+      </div>
+      <!--Grid row-->
+    </div>
+  </main>
+  <!--Main layout-->
+  <!--Footer-->
+  <!--/.Footer-->
+{% endblock content %}

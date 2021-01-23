@@ -4,12 +4,17 @@ from .models import Categories, Product, Order, OrderProduct, Payment, Coupon, A
 from .forms.add_to_cart import OrderProductForm
 from .forms.checkout_form import CheckoutForm
 from .forms.coupon_form import CouponForm
+from .forms.signup import SignUpForm
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.contrib import messages
 from django.db.models import F
 import stripe
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login, authenticate
+
 
 def is_valid_form(values):
 
@@ -22,6 +27,23 @@ def is_valid_form(values):
     return is_valid
 
 
+def register(request):
+
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            email = form.cleaned_data.get('email')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(email=email, password=raw_password)
+            login(request, user)
+            return redirect('home')
+    else:
+        form = SignUpForm()
+
+    context = {}
+    context.update({'form':form})
+    return render(request, "registration/signup.html",context)
 
 def home(request):
     context = {}
@@ -48,6 +70,7 @@ def product(request, pk):
 
     return render(request, "product-page.html", context)
 
+@login_required
 def cart_action(request):
     data = request.POST or None
     if data:
@@ -102,7 +125,7 @@ def cart_action(request):
     pid = request.POST.get('product')
     return redirect(reverse('product', kwargs={'pk':pid}))
 
-
+@login_required
 def delete_item_from_cart(request):
     form = OrderProductForm(request.POST)
     if form.is_bound and form.is_valid():
@@ -125,6 +148,7 @@ def delete_item_from_cart(request):
 
     return redirect(reverse('order_summary'))
 
+@login_required
 def order_summary(request):
     context = {}
     order_qs = Order.objects.filter(placed = False, user = request.user)
@@ -133,7 +157,7 @@ def order_summary(request):
     context.update({'order':order})
     return render(request, "order-summary.html", context)
 
-
+@login_required
 def checkout(request):
     context = {}
     order = Order.objects.filter(placed=False, user=request.user)[0]
@@ -151,10 +175,9 @@ def checkout(request):
         form = CheckoutForm(request.POST)
 
         if form.is_valid():
-
+            import pdb; pdb.set_trace()
 
             use_default_shipping = form.cleaned_data.get('use_default_shipping')
-
             if use_default_shipping:
                 address_qs = Address.objects.filter(user = request.user, default = True, type = 'S')
                 if address_qs.exists():
@@ -250,7 +273,7 @@ def checkout(request):
     context.update({'form':form, 'order':order, 'coupon_form': coupon_form})
     return render(request, "checkout-page.html", context)
 
-
+@login_required
 def payment(request):
     context = {}
     order = Order.objects.filter(placed = False, user = request.user)[0]
@@ -305,6 +328,7 @@ def payment(request):
     context.update({'order':order, 'DISPLAY_COUPON_FORM':0})
     return render(request,'payment.html',context)
 
+@login_required
 def add_coupon(request):
 
     if request.method == "POST":
@@ -327,12 +351,14 @@ def add_coupon(request):
         form = CouponForm()
     return redirect(reverse('checkout'))
 
+@login_required
 def order_history(request):
     context = {}
     orders = Order.objects.filter(placed=True, user=request.user)
     context.update({'orders':orders})
     return render(request,"order-history.html",context)
 
+@login_required
 def order_details(request, pk):
     context = {}
     order = Order.objects.filter(pk = pk)

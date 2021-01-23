@@ -14,5 +14,6 @@ path('order-history', views.order_history, name = 'order_history'),
 path('order-details/<int:pk>/', views.order_details, name = 'order_details'),
 path('checkout/', views.checkout, name = 'checkout'),
 path('add_coupon/', views.add_coupon, name = 'add_coupon'),
-path('payment/', views.payment, name = 'payment')
+path('payment/', views.payment, name = 'payment'),
+path('register/', views.register, name = 'register')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

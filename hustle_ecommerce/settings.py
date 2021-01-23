@@ -134,3 +134,7 @@ STATICFILES_DIRS = [
 
 MEDIA_ROOT = 'media'
 MEDIA_URL = '/media/'
+
+LOGIN_REDIRECT_URL = '/home'
+LOGOUT_REDIRECT_URL = '/home'
+AUTH_USER_MODEL = "core.MyUser"
