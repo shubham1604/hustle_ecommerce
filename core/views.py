@@ -175,8 +175,6 @@ def checkout(request):
         form = CheckoutForm(request.POST)
 
         if form.is_valid():
-            import pdb; pdb.set_trace()
-
             use_default_shipping = form.cleaned_data.get('use_default_shipping')
             if use_default_shipping:
                 address_qs = Address.objects.filter(user = request.user, default = True, type = 'S')
