@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+import django_heroku
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'ca0jy^(3i7$rzav(t-4*72w_(ui7nrd%pk75m7l6ug5t$!-uam'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY','ca0jy^(3i7$rzav(t-4*72w_(ui7nrd%pk75m7l6ug5t$!-uam')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 
 ALLOWED_HOSTS = []
 
@@ -138,3 +140,5 @@ MEDIA_URL = '/media/'
 LOGIN_REDIRECT_URL = '/home'
 LOGOUT_REDIRECT_URL = '/home'
 AUTH_USER_MODEL = "core.MyUser"
+
+django_heroku.settings(locals())
