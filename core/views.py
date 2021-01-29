@@ -123,6 +123,9 @@ def cart_action(request):
                     messages.info(request, "You do not have an active order")
 
     pid = request.POST.get('product')
+
+    if not pid:
+        return redirect(reverse('home'))
     return redirect(reverse('product', kwargs={'pk':pid}))
 
 @login_required
