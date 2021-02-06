@@ -35,6 +35,7 @@ class HomeTests(TestCase):
     @classmethod
     def setUpTestData(cls):
 
+
         category  = Categories(**{'category_name':f"cat_{0}"})
         category.save()
         product = Product(**{'product_title':f"name_{0}",
@@ -63,4 +64,10 @@ class HomeTests(TestCase):
         product_detail_view_link = reverse('product', kwargs={'pk':product.pk})
         self.assertContains(self.response, 'href = "{0}"'.format(product_detail_view_link))
 
-    
+    def test_context_contains_categories(self):
+        categories = self.response.context['categories'][0]
+        self.assertEquals(isinstance(categories, Categories), True)
+
+    def test_context_contains_products(self):
+        categories = self.response.context['products'][0]
+        self.assertEquals(isinstance(categories, Product), True)
