@@ -12,7 +12,6 @@ from django.db.models import F
 import stripe
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, authenticate
 
 
@@ -48,7 +47,7 @@ def register(request):
 def home(request):
     context = {}
     categories = Categories.objects.all()[:7]
-    products = Product.objects.all()
+    products = Product.objects.all().order_by('-pk')
 
     #paginator code starts
     paginator = Paginator(products,9)
